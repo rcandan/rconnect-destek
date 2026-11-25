@@ -351,6 +351,8 @@ jobs:
           sed -i -e "s/MACOSX_DEPLOYMENT_TARGET = [0-9]*.[0-9]*;/MACOSX_DEPLOYMENT_TARGET = ${MIN_MACOS_VERSION};/" flutter/macos/Runner.xcodeproj/project.pbxproj
           echo "MACOSX_DEPLOYMENT_TARGET=${MIN_MACOS_VERSION}" >> "$GITHUB_ENV"
           export MACOSX_DEPLOYMENT_TARGET="${MIN_MACOS_VERSION}"
+          # Finder/Dock name "RConnect Yönetici" (xcconfig default is plain RConnect; forwarded to xcodebuild)
+          export FLUTTER_XCODE_RCONNECT_DISPLAY_NAME="RConnect Yönetici"
           ./build.py --flutter --hwcodec --unix-file-copy-paste --screencapturekit
 
       - name: Create unsigned dmg + SHA256
@@ -359,7 +361,7 @@ jobs:
           sed -i -e 's/MAXIMUM_UNMOUNTING_ATTEMPTS=3/MAXIMUM_UNMOUNTING_ATTEMPTS=7/' "$CREATE_DMG"
           mkdir -p out
           OUT="RConnect-Yonetici-${{ env.VERSION }}-arm64.dmg"
-          create-dmg --icon "RustDesk.app" 200 190 --hide-extension "RustDesk.app" --window-size 800 400 --app-drop-link 600 185 "out/$OUT" ./flutter/build/macos/Build/Products/Release/RustDesk.app
+          create-dmg --volname "RConnect Yönetici" --icon "RConnect.app" 200 190 --hide-extension "RConnect.app" --window-size 800 400 --app-drop-link 600 185 "out/$OUT" ./flutter/build/macos/Build/Products/Release/RConnect.app
           (cd out && shasum -a 256 "$OUT" | tee "$OUT.sha256")
           ls -l out
 

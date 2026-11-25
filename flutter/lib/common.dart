@@ -3063,7 +3063,12 @@ int versionCmp(String v1, String v2) {
 }
 
 String getWindowName({WindowType? overrideType}) {
-  final name = bind.mainGetAppNameSync();
+  var name = bind.mainGetAppNameSync();
+  // RConnect: the macOS administrator (outgoing-only) build is shown as "<app> Yönetici";
+  // the support build and Windows keep the plain app name.
+  if (isMacOS && bind.isOutgoingOnly()) {
+    name = "$name Yönetici";
+  }
   switch (overrideType ?? kWindowType) {
     case WindowType.Main:
       return name;

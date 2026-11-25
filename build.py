@@ -931,6 +931,25 @@ def build_deb_from_folder(version, binary_folder, want_drm=False):
     os.chdir("..")
 
 
+def rconnect_macos_brand(app):
+    """Give the .app its user-visible name (cwd: flutter/). The bundle FILE name stays ASCII
+    `RConnect.app` (src/platform/macos.rs hardcodes /Applications/{APP_NAME}.app); Finder/Dock/menu bar
+    show the localized CFBundleDisplayName/CFBundleName from InfoPlist.strings (needs
+    LSHasLocalizedDisplayName, set in Info.plist). Role comes from RCONNECT_ROL, same as the Rust build."""
+    name = 'RConnect Yönetici' if os.environ.get('RCONNECT_ROL') == 'yonetici' else 'RConnect'
+    res = os.path.join(app, 'Contents', 'Resources')
+    for lang in ('en', 'tr'):
+        d = os.path.join(res, f'{lang}.lproj')
+        os.makedirs(d, exist_ok=True)
+        with open(os.path.join(d, 'InfoPlist.strings'), 'w', encoding='utf-8') as f:
+            f.write(f'"CFBundleDisplayName" = "{name}";\n"CFBundleName" = "{name}";\n')
+    plist = os.path.join(app, 'Contents', 'Info.plist')
+    system2(f'/usr/libexec/PlistBuddy -c "Delete :CFBundleLocalizations" "{plist}" || true')
+    system2(f'/usr/libexec/PlistBuddy -c "Add :CFBundleLocalizations array" -c "Add :CFBundleLocalizations:0 string en" -c "Add :CFBundleLocalizations:1 string tr" "{plist}"')
+    # Resources, Info.plist and `service` changed after Xcode signed the bundle: re-seal (ad hoc, as Xcode did).
+    system2(f'codesign --force --deep -s - --entitlements macos/Runner/Release.entitlements "{app}"')
+
+
 def build_flutter_dmg(version, features):
     if not skip_cargo:
         # set minimum osx build target, now is 10.14, which is the same as the flutter xcode project
@@ -946,11 +965,12 @@ def build_flutter_dmg(version, features):
     mac_arch = 'arm64' if platform.machine().lower() in ('arm64', 'aarch64') else 'x86_64'
     system2(
         f'FLUTTER_XCODE_ARCHS={mac_arch} FLUTTER_XCODE_ONLY_ACTIVE_ARCH=YES flutter build macos --release')
-    system2('cp -rf ../target/release/service ./build/macos/Build/Products/Release/RustDesk.app/Contents/MacOS/')
+    system2('cp -rf ../target/release/service ./build/macos/Build/Products/Release/RConnect.app/Contents/MacOS/')
+    rconnect_macos_brand('./build/macos/Build/Products/Release/RConnect.app')
     '''
     system2(
-        "create-dmg --volname \"RustDesk Installer\" --window-pos 200 120 --window-size 800 400 --icon-size 100 --app-drop-link 600 185 --icon RustDesk.app 200 190 --hide-extension RustDesk.app rustdesk.dmg ./build/macos/Build/Products/Release/RustDesk.app")
-    os.rename("rustdesk.dmg", f"../rustdesk-{version}.dmg")
+        "create-dmg --volname \"RConnect Yönetici\" --window-pos 200 120 --window-size 800 400 --icon-size 100 --app-drop-link 600 185 --icon RConnect.app 200 190 --hide-extension RConnect.app rconnect.dmg ./build/macos/Build/Products/Release/RConnect.app")
+    os.rename("rconnect.dmg", f"../rconnect-{version}.dmg")
     '''
     os.chdir("..")
 
