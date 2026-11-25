@@ -52,6 +52,12 @@ class HomePageState extends State<HomePage> {
         appBarActions: [],
       ));
     }
+    if (isAndroid && bind.isIncomingOnly()) {
+      // RConnect (support role): only the share-screen page (ID/password, start
+      // service, accessibility permission). No connect/chat/settings tabs.
+      _pages.add(ServerPage());
+      return;
+    }
     if (isAndroid && !bind.isOutgoingOnly()) {
       _chatPageTabIndex = _pages.length;
       _pages.addAll([ChatPage(type: ChatPageType.mobileMain), ServerPage()]);
@@ -79,7 +85,10 @@ class HomePageState extends State<HomePage> {
             title: appTitle(),
             actions: _pages.elementAt(_selectedIndex).appBarActions,
           ),
-          bottomNavigationBar: BottomNavigationBar(
+          // BottomNavigationBar requires >= 2 items; the single-page support UI has none.
+          bottomNavigationBar: _pages.length < 2
+              ? null
+              : BottomNavigationBar(
             key: navigationBarKey,
             items: _pages
                 .map((page) =>
