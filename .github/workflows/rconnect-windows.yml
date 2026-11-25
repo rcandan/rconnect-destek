@@ -264,7 +264,7 @@ jobs:
   # Administrator (outgoing-only) client for Apple Silicon. Unsigned, not notarized.
   build-macos-arm64:
     needs: [generate-bridge-flutter-344]
-    runs-on: macos-14
+    runs-on: macos-15
     env:
       TARGET: aarch64-apple-darwin
       VCPKG_TRIPLET: arm64-osx
