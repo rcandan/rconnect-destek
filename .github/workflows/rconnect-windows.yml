@@ -1,6 +1,6 @@
 # RConnect — Windows x64 portable exe (role: destek) + macOS arm64 dmg (role: yonetici),
 # trimmed from upstream RustDesk 1.5.3 flutter-build.yml.
-# Output: RConnect-Destek-<version>.exe and RConnect-Yonetici-<version>-arm64.dmg (+ .sha256) as workflow
+# Output: RConnect-Destek-<version>.exe, RConnect-Yonetici-<version>-arm64.dmg, RConnect-Destek-<version>-{arm64,x64}.dmg (+ .sha256) as workflow
 # artifacts. The role is baked in at compile time via RCONNECT_ROL (see src/common.rs). Android destek APK (universal arm64+armv7) is release-signed (fails without secrets); the support exe embeds an optional salted-hash fixed password from secrets.
 name: RConnect Windows x64 + macOS arm64
 
