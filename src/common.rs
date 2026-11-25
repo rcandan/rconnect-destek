@@ -2506,7 +2506,69 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
     ThrottledInterval::new(i)
 }
 
+/// Build role, fixed at compile time via `RCONNECT_ROL` (`destek` | `yonetici`).
+/// Unset or any other value falls back to `destek` (the restrictive role).
+const RCONNECT_ROL: &str = match option_env!("RCONNECT_ROL") {
+    Some(r) => r,
+    None => "destek",
+};
+
+const fn rconnect_is_yonetici() -> bool {
+    let (a, b) = (RCONNECT_ROL.as_bytes(), "yonetici".as_bytes());
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut i = 0;
+    while i < a.len() {
+        if a[i] != b[i] {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
+/// Embedded per-role settings; applied before (and independent of) custom.txt.
+/// Keys in HARD_SETTINGS are read via config::is_* helpers / isIncomingOnly;
+/// keys in BUILTIN_SETTINGS are read via bind.mainGetBuildinOption.
+fn apply_rconnect_role_settings() {
+    let mut hard = config::HARD_SETTINGS.write().unwrap();
+    if rconnect_is_yonetici() {
+        hard.insert("conn-type".to_owned(), "outgoing".to_owned());
+        return;
+    }
+    hard.insert("conn-type".to_owned(), "incoming".to_owned());
+    // HARD options (config.rs is_disable_settings/ab/account/installation)
+    for k in [
+        "disable-settings",
+        "disable-installation",
+        "disable-account",
+        "disable-ab",
+    ] {
+        hard.insert(k.to_owned(), "Y".to_owned());
+    }
+    drop(hard);
+    let mut builtin = config::BUILTIN_SETTINGS.write().unwrap();
+    for k in [
+        "hide-security-settings",
+        "hide-network-settings",
+        "hide-server-settings",
+        "hide-proxy-settings",
+        "hide-websocket-settings",
+        "hide-remote-printer-settings",
+        "hide-general-settings",
+        "hide-help-cards",
+        "hide-powered-by-me",
+        "hide-stop-service",
+        "disable-change-id",
+        "disable-change-permanent-password",
+    ] {
+        builtin.insert(k.to_owned(), "Y".to_owned());
+    }
+}
+
 pub fn load_custom_client() {
+    apply_rconnect_role_settings();
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
         read_custom_client(data.trim());
