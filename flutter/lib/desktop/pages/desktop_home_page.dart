@@ -582,8 +582,14 @@ class _DesktopHomePageState extends State<DesktopHomePage>
       String? link,
       bool? closeButton,
       String? closeOption}) {
+    // RConnect: hide-help-cards must not hide the macOS permission prompts (Screen Recording /
+    // Accessibility / Input Monitoring): the customer has to be able to grant them.
     if (bind.mainGetBuildinOption(key: kOptionHideHelpCards) == 'Y' &&
-        content != 'install_daemon_tip') {
+        content != 'install_daemon_tip' &&
+        !(isMacOS &&
+            (content == 'config_screen' ||
+                content == 'config_acc' ||
+                content == 'config_input'))) {
       return const SizedBox();
     }
     void closeCard() async {

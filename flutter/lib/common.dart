@@ -3066,8 +3066,13 @@ String getWindowName({WindowType? overrideType}) {
   var name = bind.mainGetAppNameSync();
   // RConnect: the macOS administrator (outgoing-only) build is shown as "<app> Yönetici";
   // the support build and Windows keep the plain app name.
-  if (isMacOS && bind.isOutgoingOnly()) {
-    name = "$name Yönetici";
+  if (isMacOS) {
+    if (bind.isOutgoingOnly()) {
+      name = "$name Yönetici";
+    } else if (name == "RConnectDestek") {
+      // support build: APP_NAME is the ASCII bundle name, the user sees "RConnect Destek"
+      name = "RConnect Destek";
+    }
   }
   switch (overrideType ?? kWindowType) {
     case WindowType.Main:

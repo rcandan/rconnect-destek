@@ -60,6 +60,35 @@ lazy_static::lazy_static! {
 type Size = (i32, i32, i32, i32);
 type KeyPair = (Vec<u8>, Vec<u8>);
 
+/// RConnect: the macOS support (`destek`) build is a separate app, `RConnectDestek.app`, so it can live next to
+/// the administrator `RConnect.app` on one Mac (config dir, IPC socket, launchd labels and the
+/// `/Applications/{APP_NAME}.app` install check all derive from APP_NAME). Role is the compile-time
+/// `RCONNECT_ROL`; anything but `yonetici` is the support role (same fallback as `rustdesk::common`).
+/// Windows/Linux keep `RConnect`.
+const DEFAULT_APP_NAME: &str = if !cfg!(target_os = "macos") {
+    "RConnect"
+} else {
+    match option_env!("RCONNECT_ROL") {
+        Some(r) if is_yonetici(r) => "RConnect",
+        _ => "RConnectDestek",
+    }
+};
+
+const fn is_yonetici(r: &str) -> bool {
+    let (a, b) = (r.as_bytes(), "yonetici".as_bytes());
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut i = 0;
+    while i < a.len() {
+        if a[i] != b[i] {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
 lazy_static::lazy_static! {
     static ref CONFIG: RwLock<Config> = RwLock::new(Config::load());
     static ref CONFIG2: RwLock<Config2> = RwLock::new(Config2::load());
@@ -68,7 +97,7 @@ lazy_static::lazy_static! {
     static ref ONLINE: Mutex<HashMap<String, i64>> = Default::default();
     pub static ref PROD_RENDEZVOUS_SERVER: RwLock<String> = RwLock::new("".to_owned());
     pub static ref EXE_RENDEZVOUS_SERVER: RwLock<String> = Default::default();
-    pub static ref APP_NAME: RwLock<String> = RwLock::new("RConnect".to_owned());
+    pub static ref APP_NAME: RwLock<String> = RwLock::new(DEFAULT_APP_NAME.to_owned());
     static ref KEY_PAIR: Mutex<Option<KeyPair>> = Default::default();
     static ref USER_DEFAULT_CONFIG: RwLock<(UserDefaultConfig, Instant)> = RwLock::new((UserDefaultConfig::load(), Instant::now()));
     pub static ref NEW_STORED_PEER_CONFIG: Mutex<HashSet<String>> = Default::default();
