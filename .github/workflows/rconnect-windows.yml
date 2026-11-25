@@ -283,7 +283,7 @@ jobs:
 
       - name: Install build runtime
         run: |
-          brew install llvm create-dmg
+          brew install llvm create-dmg nasm
           if command -v pkg-config &>/dev/null; then echo "pkg-config already installed"; else brew install pkg-config; fi
 
       - name: Install flutter
